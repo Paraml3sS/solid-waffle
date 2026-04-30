@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFE9D6">
+<title>Складай слова! 🎈</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Comic Sans MS", sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, #FFE0CC 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, #CFE7FF 0%, transparent 45%),
+      radial-gradient(circle at 50% 95%, #E5D4FF 0%, transparent 50%),
+      linear-gradient(180deg, #FFF7EE 0%, #FFEAD6 100%);
+    color: #4A3A2E;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: none;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    height: 100vh;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 4px;
+    flex-shrink: 0;
+  }
+
+  .score-chip {
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #6B4F3B;
+    box-shadow: 0 3px 0 rgba(190, 140, 90, 0.18);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-chip::before { content: "⭐"; font-size: 18px; }
+
+  .reload-btn {
+    background: #fff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(190, 140, 90, 0.18);
+    transition: transform 0.15s;
+    touch-action: manipulation;
+  }
+  .reload-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(190, 140, 90, 0.18); }
+
+  /* ---------- Word display ---------- */
+  .word-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 2vh, 18px);
+    padding: 8px 8px 16px;
+    min-height: 0;
+  }
+
+  .word-prompt {
+    font-size: clamp(14px, 4vw, 18px);
+    color: #8B6F5A;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .word-display {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(4px, 1.2vw, 8px);
+    padding: 4px;
+  }
+
+  .tile {
+    width: clamp(36px, 11vw, 60px);
+    height: clamp(46px, 14vw, 76px);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(22px, 7vw, 38px);
+    font-weight: 800;
+    background: #FFFFFF;
+    color: #B89D86;
+    box-shadow:
+      inset 0 -3px 0 rgba(180, 150, 120, 0.12),
+      0 2px 4px rgba(180, 150, 120, 0.10);
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    position: relative;
+  }
+
+  .tile.done {
+    background: linear-gradient(180deg, #9DDFB7 0%, #7FCB9D 100%);
+    color: #fff;
+    box-shadow:
+      inset 0 -3px 0 rgba(60, 130, 90, 0.25),
+      0 3px 6px rgba(120, 200, 150, 0.35);
+  }
+
+  .tile.current {
+    background: linear-gradient(180deg, #FFE08A 0%, #FFC857 100%);
+    color: #6B4A1A;
+    transform: scale(1.08);
+    box-shadow:
+      inset 0 -3px 0 rgba(180, 130, 30, 0.3),
+      0 6px 14px rgba(255, 200, 87, 0.55);
+    animation: tile-bob 1.2s ease-in-out infinite;
+  }
+
+  .tile.current::before {
+    content: "▼";
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: #FFA640;
+    animation: caret-bob 1.2s ease-in-out infinite;
+  }
+
+  @keyframes tile-bob {
+    0%, 100% { transform: scale(1.08) translateY(0); }
+    50% { transform: scale(1.10) translateY(-3px); }
+  }
+  @keyframes caret-bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(4px); }
+  }
+
+  /* ---------- Keyboard ---------- */
+  .keyboard {
+    --kb-pad: 6px;
+    --kb-width: min(calc(100vw - 8px), 600px);
+    --key-gap: clamp(3px, 0.8vw, 6px);
+    --key-w: calc((var(--kb-width) - 11 * var(--key-gap) - 2 * var(--kb-pad)) / 12);
+    --key-h: clamp(44px, calc(var(--key-w) * 1.45), 64px);
+    width: var(--kb-width);
+    margin: 0 auto;
+    padding: 8px var(--kb-pad) calc(10px + env(safe-area-inset-bottom, 0));
+    flex-shrink: 0;
+  }
+
+  .row {
+    display: flex;
+    gap: var(--key-gap);
+    justify-content: center;
+    margin-bottom: clamp(5px, 1vw, 8px);
+  }
+  .row:last-child { margin-bottom: 0; }
+
+  .key {
+    width: var(--key-w);
+    height: var(--key-h);
+    border: none;
+    border-radius: clamp(8px, 1.5vw, 12px);
+    background: #ECE0D2;
+    color: #B0A192;
+    font-family: inherit;
+    font-size: clamp(15px, 4.5vw, 22px);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(160, 130, 100, 0.20);
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .key.highlighted {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F5E9DA 100%);
+    color: #4A3A2E;
+    box-shadow: 0 3px 0 rgba(160, 130, 100, 0.25);
+  }
+
+  .key.target {
+    background: linear-gradient(180deg, #FFD66B 0%, #FFB347 100%);
+    color: #5A3A10;
+    box-shadow:
+      0 0 0 3px rgba(255, 200, 87, 0.55),
+      0 4px 0 rgba(180, 130, 30, 0.35),
+      0 0 16px rgba(255, 200, 87, 0.6);
+    animation: key-pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes key-pulse {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-2px) scale(1.04); }
+  }
+
+  .key.bouncing {
+    animation: key-bounce 0.35s ease-out;
+    background: linear-gradient(180deg, #9DDFB7 0%, #7FCB9D 100%);
+    color: #fff;
+  }
+  @keyframes key-bounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+
+  .key.shaking {
+    animation: key-shake 0.4s ease-in-out;
+    background: #FFD0CC;
+    color: #C04040;
+  }
+  @keyframes key-shake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-6px); }
+    30% { transform: translateX(6px); }
+    45% { transform: translateX(-5px); }
+    60% { transform: translateX(5px); }
+    75% { transform: translateX(-3px); }
+    90% { transform: translateX(3px); }
+  }
+
+  .key:active:not(.shaking):not(.bouncing) { transform: translateY(2px); }
+
+  /* ---------- Celebration overlay ---------- */
+  .celebration {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 30, 20, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    overflow: hidden;
+  }
+  .celebration.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .celebration-card {
+    position: relative;
+    background: #FFF7EE;
+    border-radius: 28px;
+    padding: 32px 36px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    animation: card-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 90vw;
+  }
+  @keyframes card-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .celebration-emoji {
+    font-size: 64px;
+    margin-bottom: 8px;
+    animation: emoji-spin 1.2s ease-in-out infinite;
+  }
+  @keyframes emoji-spin {
+    0%, 100% { transform: rotate(-8deg) scale(1); }
+    50% { transform: rotate(8deg) scale(1.1); }
+  }
+
+  .celebration-card h2 {
+    margin: 0 0 6px;
+    font-size: 32px;
+    color: #FF8A40;
+    font-weight: 800;
+  }
+  .celebration-word {
+    margin: 0 0 22px;
+    font-size: 20px;
+    color: #6B4F3B;
+    font-weight: 600;
+  }
+
+  .next-btn {
+    background: linear-gradient(180deg, #FFC857 0%, #FFA640 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 36px;
+    font-size: 22px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #C57A20, 0 8px 18px rgba(255, 166, 64, 0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+    touch-action: manipulation;
+    letter-spacing: 0.5px;
+  }
+  .next-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #C57A20, 0 4px 10px rgba(255, 166, 64, 0.4);
+  }
+
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 14px;
+    top: -20px;
+    border-radius: 2px;
+    animation: confetti-fall linear forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0.9; }
+  }
+
+  /* ---------- Tiny screens ---------- */
+  @media (max-height: 560px) {
+    .tile { height: clamp(40px, 11vh, 60px); }
+    .word-area { gap: 6px; padding: 4px; }
+    .word-prompt { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="score-chip">Слова: <span id="score">0</span></div>
+      <button class="reload-btn" id="reload-btn" aria-label="Інше слово" title="Інше слово">🔄</button>
+    </header>
+
+    <main class="word-area">
+      <div class="word-prompt">Натискай літери по черзі ✨</div>
+      <div class="word-display" id="word-display" aria-live="polite"></div>
+    </main>
+
+    <section class="keyboard" id="keyboard" aria-label="Клавіатура"></section>
+  </div>
+
+  <div class="celebration" id="celebration" aria-hidden="true">
+    <div class="celebration-card">
+      <div class="celebration-emoji">🎉</div>
+      <h2>Молодець!</h2>
+      <p class="celebration-word" id="celebration-word"></p>
+      <button class="next-btn" id="next-btn">Далі →</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const ROWS = [
+    "ЙЦУКЕНГШЩЗХЇ",
+    "ФІВАПРОЛДЖЄ",
+    "ЯЧСМИТЬБЮ"
+  ];
+
+  const WORDS = [
+    "КІТ", "ДІМ", "ЛІС", "СИР", "СОН", "РАК", "МАК", "НІС",
+    "РИБА", "МАМА", "ТАТО", "ВОДА", "ЛІТО", "ЗИМА", "БАБА", "ДІД",
+    "ДРУГ", "БРАТ", "ПТАХ", "РУКА", "НОГА", "ОКО",
+    "СОНЦЕ", "КНИГА", "ШКОЛА", "ХЛІБ", "ЛИМОН", "БАНАН", "КАВУН",
+    "ЛІТАК", "ЗАЄЦЬ", "ПОЇЗД",
+    "МОЛОКО", "ЯБЛУКО", "ЛЯЛЬКА", "МАШИНА", "КОРОВА", "КВІТКА", "РОДИНА",
+    "ВЕДМІДЬ"
+  ];
+
+  const CONFETTI_COLORS = ["#FFC857", "#FF8A66", "#9DDFB7", "#A8C8FF", "#D4B3FF", "#FFB3C6"];
+
+  const wordDisplay = document.getElementById("word-display");
+  const keyboardEl = document.getElementById("keyboard");
+  const scoreEl = document.getElementById("score");
+  const reloadBtn = document.getElementById("reload-btn");
+  const celebration = document.getElementById("celebration");
+  const celebrationWord = document.getElementById("celebration-word");
+  const nextBtn = document.getElementById("next-btn");
+
+  const keyEls = new Map();    // letter -> button
+  let currentWord = "";
+  let cursor = 0;              // index of next letter to press
+  let score = 0;
+  let lastWord = "";
+  let isComplete = false;
+
+  /* ---------- Build keyboard ---------- */
+  ROWS.forEach((rowLetters, idx) => {
+    const row = document.createElement("div");
+    row.className = "row row-" + (idx + 1);
+    [...rowLetters].forEach(letter => {
+      const btn = document.createElement("button");
+      btn.className = "key";
+      btn.type = "button";
+      btn.textContent = letter;
+      btn.setAttribute("aria-label", "Літера " + letter);
+      btn.dataset.letter = letter;
+      btn.addEventListener("click", () => handlePress(letter, btn));
+      row.appendChild(btn);
+      keyEls.set(letter, btn);
+    });
+    keyboardEl.appendChild(row);
+  });
+
+  /* ---------- Word picking & rendering ---------- */
+  function pickWord() {
+    let w;
+    do {
+      w = WORDS[Math.floor(Math.random() * WORDS.length)];
+    } while (w === lastWord && WORDS.length > 1);
+    lastWord = w;
+    return w;
+  }
+
+  function renderWord() {
+    wordDisplay.innerHTML = "";
+    [...currentWord].forEach((ch, i) => {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.textContent = ch;
+      if (i < cursor) tile.classList.add("done");
+      else if (i === cursor) tile.classList.add("current");
+      wordDisplay.appendChild(tile);
+    });
+  }
+
+  function refreshKeyStates() {
+    const uniqueLetters = new Set(currentWord);
+    const nextLetter = cursor < currentWord.length ? currentWord[cursor] : null;
+    keyEls.forEach((btn, letter) => {
+      btn.classList.remove("highlighted", "target");
+      if (uniqueLetters.has(letter)) btn.classList.add("highlighted");
+      if (letter === nextLetter) btn.classList.add("target");
+    });
+  }
+
+  function startNewWord() {
+    isComplete = false;
+    currentWord = pickWord();
+    cursor = 0;
+    renderWord();
+    refreshKeyStates();
+  }
+
+  /* ---------- Input handling ---------- */
+  function handlePress(letter, btn) {
+    if (isComplete) return;
+    const expected = currentWord[cursor];
+    if (letter === expected) {
+      // correct
+      cursor++;
+      btn.classList.remove("target", "shaking");
+      btn.classList.add("bouncing");
+      setTimeout(() => btn.classList.remove("bouncing"), 360);
+      renderWord();
+      if (cursor >= currentWord.length) {
+        isComplete = true;
+        score++;
+        scoreEl.textContent = score;
+        // clear all key highlights once word is done
+        keyEls.forEach(k => k.classList.remove("highlighted", "target"));
+        setTimeout(showCelebration, 320);
+      } else {
+        refreshKeyStates();
+      }
+    } else {
+      // wrong (or non-target) — gentle shake, ignore
+      if (btn.classList.contains("shaking")) return;
+      btn.classList.add("shaking");
+      setTimeout(() => btn.classList.remove("shaking"), 420);
+    }
+  }
+
+  /* ---------- Physical keyboard ---------- */
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (celebration.classList.contains("show")) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        hideCelebrationAndAdvance();
+      }
+      return;
+    }
+    const k = (e.key || "").toUpperCase();
+    if (k.length === 1 && keyEls.has(k)) {
+      e.preventDefault();
+      handlePress(k, keyEls.get(k));
+    }
+  });
+
+  /* ---------- Celebration ---------- */
+  function showCelebration() {
+    celebrationWord.textContent = currentWord;
+    celebration.classList.add("show");
+    celebration.setAttribute("aria-hidden", "false");
+    spawnConfetti();
+  }
+
+  function hideCelebrationAndAdvance() {
+    celebration.classList.remove("show");
+    celebration.setAttribute("aria-hidden", "true");
+    clearConfetti();
+    startNewWord();
+  }
+
+  function spawnConfetti() {
+    clearConfetti();
+    const count = 36;
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      piece.style.left = Math.random() * 100 + "vw";
+      piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+      piece.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+      piece.style.animationDelay = (Math.random() * 0.4) + "s";
+      piece.style.transform = "rotate(" + (Math.random() * 360) + "deg)";
+      piece.style.width = (6 + Math.random() * 8) + "px";
+      piece.style.height = (10 + Math.random() * 8) + "px";
+      celebration.appendChild(piece);
+    }
+  }
+
+  function clearConfetti() {
+    celebration.querySelectorAll(".confetti-piece").forEach(p => p.remove());
+  }
+
+  nextBtn.addEventListener("click", hideCelebrationAndAdvance);
+  reloadBtn.addEventListener("click", () => {
+    if (celebration.classList.contains("show")) return;
+    startNewWord();
+  });
+
+  // Prevent double-tap zoom on iOS for the whole game area
+  document.addEventListener("dblclick", (e) => e.preventDefault());
+
+  /* ---------- Go! ---------- */
+  startNewWord();
+})();
+</script>
+</body>
+</html>
