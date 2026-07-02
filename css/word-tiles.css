@@ -1,0 +1,112 @@
+  /* ---------- Word display ---------- */
+  .word-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1.6vh, 14px);
+    padding: 6px 8px 12px;
+    min-height: 0;
+  }
+
+  .visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(80px, 22vh, 140px);
+    height: clamp(80px, 22vh, 140px);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow:
+      inset 0 -4px 0 rgba(180, 150, 120, 0.10),
+      0 6px 14px rgba(180, 150, 120, 0.18);
+    font-size: clamp(56px, 16vh, 96px);
+    line-height: 1;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .visual:empty { display: none; }
+  .visual img { width: 86%; height: 86%; object-fit: contain; }
+  .visual svg { width: 70%; height: 70%; }
+  .visual.verb { background: #FFFFFF; }
+
+  .word-prompt {
+    font-size: clamp(13px, 3.6vw, 17px);
+    color: #8B6F5A;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .word-display {
+    /* --count is set per word from JS (= number of letters) */
+    --count: 5;
+    --wd-gap: clamp(3px, 1vw, 8px);
+    --wd-max: calc(var(--board-width) - 16px);            /* usable row width */
+    --tile-w: max(26px, min(56px,
+      calc((var(--wd-max) - (var(--count) - 1) * var(--wd-gap)) / var(--count))));
+    display: flex;
+    flex-wrap: wrap;              /* stays as a safety net for very long custom words */
+    justify-content: center;
+    gap: var(--wd-gap);
+    padding: 4px 0;
+  }
+
+  .tile {
+    width: var(--tile-w);
+    height: calc(var(--tile-w) * 1.28);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--tile-w) * 0.62);
+    font-weight: 800;
+    background: #FFFFFF;
+    color: #B89D86;
+    box-shadow:
+      inset 0 -3px 0 rgba(180, 150, 120, 0.12),
+      0 2px 4px rgba(180, 150, 120, 0.10);
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    position: relative;
+  }
+
+  .tile.hidden-letter { color: transparent; }
+
+  .tile.done {
+    background: linear-gradient(180deg, #9DDFB7 0%, #7FCB9D 100%);
+    color: #fff !important;
+    box-shadow:
+      inset 0 -3px 0 rgba(60, 130, 90, 0.25),
+      0 3px 6px rgba(120, 200, 150, 0.35);
+  }
+
+  .tile.current {
+    background: linear-gradient(180deg, #FFE08A 0%, #FFC857 100%);
+    color: #6B4A1A;
+    transform: scale(1.08);
+    box-shadow:
+      inset 0 -3px 0 rgba(180, 130, 30, 0.3),
+      0 6px 14px rgba(255, 200, 87, 0.55);
+    animation: tile-bob 1.2s ease-in-out infinite;
+  }
+  .tile.current.hidden-letter { color: transparent; }
+
+  .tile.current::before {
+    content: "▼";
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: #FFA640;
+    animation: caret-bob 1.2s ease-in-out infinite;
+  }
+
+  @keyframes tile-bob {
+    0%, 100% { transform: scale(1.08) translateY(0); }
+    50% { transform: scale(1.10) translateY(-3px); }
+  }
+  @keyframes caret-bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(4px); }
+  }

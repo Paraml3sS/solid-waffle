@@ -1,0 +1,6 @@
+  /* ---------- Tiny screens ---------- */
+  @media (max-height: 600px) {
+    .visual { width: clamp(60px, 16vh, 100px); height: clamp(60px, 16vh, 100px); font-size: clamp(40px, 12vh, 70px); }
+    .word-area { gap: 4px; padding: 4px; }
+    .word-prompt { font-size: 12px; }
+  }

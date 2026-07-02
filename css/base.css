@@ -1,0 +1,32 @@
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Comic Sans MS", sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, #FFE0CC 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, #CFE7FF 0%, transparent 45%),
+      radial-gradient(circle at 50% 95%, #E5D4FF 0%, transparent 50%),
+      linear-gradient(180deg, #FFF7EE 0%, #FFEAD6 100%);
+    color: #4A3A2E;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: none;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    /* shared max content width for the keyboard and the word row */
+    --board-width: min(calc(100vw - 8px), 600px);
+    height: 100vh;   /* fallback for browsers without dvh */
+    height: 100dvh;  /* dynamic viewport height — tracks iOS Safari's toolbar so the keyboard stays visible */
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }

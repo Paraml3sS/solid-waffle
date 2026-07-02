@@ -1,0 +1,393 @@
+  /* ---------- Settings overlay ---------- */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 30, 20, 0.55);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+  .settings-overlay.show { opacity: 1; pointer-events: auto; }
+
+  .settings-panel {
+    background: #FFF7EE;
+    width: 100%;
+    max-width: 640px;
+    margin: auto 0 0;
+    border-radius: 28px 28px 0 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;   /* fallback */
+    max-height: 92dvh;  /* dynamic viewport height */
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+  }
+  @media (min-width: 700px) {
+    .settings-panel {
+      margin: auto;
+      border-radius: 28px;
+      max-height: 88vh;
+      max-height: 88dvh;
+    }
+  }
+  .settings-overlay.show .settings-panel { transform: translateY(0); }
+
+  /* In-page confirm dialog — replaces native confirm() (unreliable on iOS Safari,
+     which suppresses/no-ops blocking JS dialogs). Sibling of .settings-overlay, so
+     its backdrop is never caught by the settings click-to-close handler. */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 30, 20, 0.55);
+    z-index: 300;                 /* above .settings-overlay (200) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0));
+  }
+  .confirm-overlay.show { opacity: 1; pointer-events: auto; }
+  .confirm-box {
+    background: #FFF7EE;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 340px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    transform: scale(0.9);
+    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .confirm-overlay.show .confirm-box { transform: scale(1); }
+  .confirm-msg {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    color: #5A3F2A;
+    margin: 0 0 20px;
+    line-height: 1.35;
+  }
+  .confirm-actions { display: flex; gap: 12px; }
+  .confirm-actions button {
+    flex: 1;
+    min-height: 48px;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .confirm-cancel { background: #EFE3D3; color: #5A3F2A; }
+  .confirm-cancel:active { background: #E6D5BE; }
+  .confirm-ok { background: #FF7A7A; color: #fff; }
+  .confirm-ok:active { background: #F26060; }
+
+  /* Toast — brief in-page feedback (the score chip is hidden behind the open sheet). */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0));
+    transform: translateX(-50%) translateY(12px);
+    background: #4A3A2E;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 400;                 /* above the confirm overlay */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 8px;
+    border-bottom: 1px solid #F0E2CE;
+  }
+  .settings-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #5A3F2A;
+    font-weight: 800;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    background: #FFF1DD;
+    border-radius: 16px;
+    margin: 12px 16px 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 6px;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #8B6F5A;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab.active {
+    background: #fff;
+    color: #5A3F2A;
+    box-shadow: 0 2px 6px rgba(180, 130, 60, 0.18);
+  }
+
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #8B6F5A;
+    margin: 14px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .theme-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .theme-row {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 14px;
+    padding: 10px 14px;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 1px 0 rgba(180, 140, 90, 0.10);
+  }
+  .theme-row input[type=checkbox] { display: none; }
+  .theme-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    background: #F0E2CE;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 16px;
+    font-weight: 800;
+    transition: background 0.15s, color 0.15s;
+  }
+  .theme-row input:checked ~ .theme-checkbox {
+    background: #FFC857;
+    color: #fff;
+  }
+  .theme-row input:checked ~ .theme-checkbox::after { content: "✓"; }
+  .theme-name {
+    flex: 1;
+    font-weight: 700;
+    color: #4A3A2E;
+    font-size: 15px;
+  }
+  .theme-preview {
+    font-size: 22px;
+    color: #4A3A2E;
+    line-height: 1;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    margin-bottom: 10px;
+  }
+  .text-input, .file-label {
+    flex: 1;
+    padding: 12px 14px;
+    border: 2px solid #F0E2CE;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 16px;
+    background: #fff;
+    color: #4A3A2E;
+    min-width: 0;
+  }
+  .text-input:focus { outline: none; border-color: #FFC857; }
+  textarea.text-input { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  .add-btn {
+    background: linear-gradient(180deg, #FFC857 0%, #FFA640 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #C57A20;
+    touch-action: manipulation;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .add-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C57A20; }
+  .add-btn:disabled {
+    background: #E0D2C0;
+    color: #B0A192;
+    box-shadow: 0 3px 0 #C5B8A6;
+    cursor: not-allowed;
+  }
+
+  .hint {
+    font-size: 13px;
+    color: #8B6F5A;
+    margin: 4px 0 12px;
+    line-height: 1.4;
+  }
+  .hint.error { color: #C04040; font-weight: 600; }
+
+  .item-list { display: flex; flex-direction: column; gap: 6px; }
+  .item-row {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 8px 8px 14px;
+    gap: 10px;
+    box-shadow: 0 1px 0 rgba(180, 140, 90, 0.10);
+  }
+  .item-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #FFF1DD;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .item-thumb svg { width: 70%; height: 70%; }
+  .item-word { flex: 1; font-weight: 700; color: #4A3A2E; font-size: 15px; word-break: break-all; }
+  .item-del {
+    background: #FFE0E0;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: #C04040;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .item-del:active { background: #FFC0C0; }
+
+  .empty-state {
+    text-align: center;
+    color: #B0A192;
+    font-size: 14px;
+    padding: 16px 8px;
+    font-style: italic;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 0 rgba(180, 140, 90, 0.10);
+  }
+  .toggle-row input[type=checkbox] { display: none; }
+  .toggle-label { flex: 1; }
+  .toggle-label .t-name { font-weight: 700; color: #4A3A2E; font-size: 15px; }
+  .toggle-label .t-desc { font-size: 13px; color: #8B6F5A; margin-top: 2px; }
+  .toggle-switch {
+    width: 48px;
+    height: 28px;
+    border-radius: 999px;
+    background: #E0D2C0;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: left 0.2s;
+  }
+  .toggle-row input:checked ~ .toggle-switch { background: #FFC857; }
+  .toggle-row input:checked ~ .toggle-switch::after { left: 23px; }
+
+  .danger-btn {
+    background: #fff;
+    border: 2px solid #FFCFCF;
+    color: #C04040;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    touch-action: manipulation;
+  }
+  .danger-btn:active { background: #FFE8E8; }
+
+  .file-input { display: none; }
+  .file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #8B6F5A;
+    font-weight: 600;
+    text-align: center;
+  }
+  .file-label.has-file { color: #4A3A2E; border-color: #FFC857; background: #FFF8EC; }
+
+  .settings-footer {
+    padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0));
+    border-top: 1px solid #F0E2CE;
+    display: flex;
+    gap: 10px;
+  }
+  .settings-footer .next-btn { flex: 1; padding: 13px 0; font-size: 18px; }

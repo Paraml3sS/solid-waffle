@@ -1,0 +1,42 @@
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 4px;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .score-chip {
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #6B4F3B;
+    box-shadow: 0 3px 0 rgba(190, 140, 90, 0.18);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-chip::before { content: "⭐"; font-size: 16px; }
+
+  .top-actions { display: flex; gap: 8px; }
+
+  .icon-btn {
+    background: #fff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(190, 140, 90, 0.18);
+    transition: transform 0.15s;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(190, 140, 90, 0.18); }
