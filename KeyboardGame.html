@@ -32,8 +32,8 @@
   .app {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
-    height: 100vh;
+    height: 100vh;   /* fallback for browsers without dvh */
+    height: 100dvh;  /* dynamic viewport height — tracks iOS Safari's toolbar so the keyboard stays visible */
     padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
   }
 
@@ -392,8 +392,8 @@
     border-radius: 28px 28px 0 0;
     display: flex;
     flex-direction: column;
-    max-height: 92dvh;
-    max-height: 92vh;
+    max-height: 92vh;   /* fallback */
+    max-height: 92dvh;  /* dynamic viewport height */
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
@@ -403,6 +403,7 @@
       margin: auto;
       border-radius: 28px;
       max-height: 88vh;
+      max-height: 88dvh;
     }
   }
   .settings-overlay.show .settings-panel { transform: translateY(0); }
@@ -791,7 +792,6 @@
 
           <div class="section-title" style="margin-top:18px">Дані</div>
           <button class="danger-btn" id="reset-score-btn">Скинути лічильник</button>
-          <button class="danger-btn" id="clear-data-btn">Видалити всі мої слова та картинки</button>
         </div>
       </div>
 
@@ -1494,15 +1494,6 @@
     if (!confirm("Скинути лічильник слів до 0?")) return;
     state.score = 0;
     scoreEl.textContent = "0";
-    saveState();
-  });
-  $("clear-data-btn").addEventListener("click", () => {
-    if (!confirm("Видалити всі власні слова та картинки? Це не можна скасувати.")) return;
-    state.customWords = [];
-    state.customImages = [];
-    renderCustomWordsInput();
-    renderCustomWordsList();
-    renderCustomImagesList();
     saveState();
   });
 
