@@ -2,6 +2,13 @@
 
 Guidance for working in this repository.
 
+## Communication
+
+**Always work and reply in English.** The maintainer may write to you in
+Ukrainian (or mix languages) — understand it fine, but respond in English.
+This applies only to chat/commit messages/explanations. It does **not** change
+the product: all in-app UI copy stays Ukrainian and child-friendly (see below).
+
 ## What this is
 
 **"Складай слова!"** (Ukrainian: *"Build words!"*) — a browser word-building
@@ -25,9 +32,13 @@ start KeyboardGame.html      # Windows
 ```
 
 No server, no install, no compile. Edit `KeyboardGame.html` and reload the page.
-There are **no automated tests** — verify changes by hand in a browser (test both
-mouse/on-screen taps and physical-keyboard input, and check `max-height: 600px`
-and `min-width: 700px` layouts).
+
+**We do not do tests here.** Do not write, add, or run any tests — no unit tests,
+no test harness, no jsdom/Playwright/Puppeteer, no `package.json`/`node_modules`.
+Verify changes **by hand in a browser** instead (test both mouse/on-screen taps and
+physical-keyboard input, and check `max-height: 600px` and `min-width: 700px`
+layouts). A quick `node --check` on the extracted script for syntax is fine, but
+keep the repo free of any test tooling.
 
 ## File structure (all inside `KeyboardGame.html`)
 

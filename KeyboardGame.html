@@ -32,6 +32,8 @@
   .app {
     display: flex;
     flex-direction: column;
+    /* shared max content width for the keyboard and the word row */
+    --board-width: min(calc(100vw - 8px), 600px);
     height: 100vh;   /* fallback for browsers without dvh */
     height: 100dvh;  /* dynamic viewport height — tracks iOS Safari's toolbar so the keyboard stays visible */
     padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
@@ -121,21 +123,27 @@
   }
 
   .word-display {
+    /* --count is set per word from JS (= number of letters) */
+    --count: 5;
+    --wd-gap: clamp(3px, 1vw, 8px);
+    --wd-max: calc(var(--board-width) - 16px);            /* usable row width */
+    --tile-w: max(26px, min(56px,
+      calc((var(--wd-max) - (var(--count) - 1) * var(--wd-gap)) / var(--count))));
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap;              /* stays as a safety net for very long custom words */
     justify-content: center;
-    gap: clamp(4px, 1.2vw, 8px);
-    padding: 4px;
+    gap: var(--wd-gap);
+    padding: 4px 0;
   }
 
   .tile {
-    width: clamp(34px, 10vw, 56px);
-    height: clamp(44px, 13vw, 70px);
+    width: var(--tile-w);
+    height: calc(var(--tile-w) * 1.28);
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(20px, 6.5vw, 34px);
+    font-size: calc(var(--tile-w) * 0.62);
     font-weight: 800;
     background: #FFFFFF;
     color: #B89D86;
@@ -190,7 +198,7 @@
   /* ---------- Keyboard ---------- */
   .keyboard {
     --kb-pad: 6px;
-    --kb-width: min(calc(100vw - 8px), 600px);
+    --kb-width: var(--board-width);
     --key-gap: clamp(3px, 0.8vw, 6px);
     --key-w: calc((var(--kb-width) - 11 * var(--key-gap) - 2 * var(--kb-pad)) / 12);
     --key-h: clamp(42px, calc(var(--key-w) * 1.45), 62px);
@@ -407,6 +415,80 @@
     }
   }
   .settings-overlay.show .settings-panel { transform: translateY(0); }
+
+  /* In-page confirm dialog — replaces native confirm() (unreliable on iOS Safari,
+     which suppresses/no-ops blocking JS dialogs). Sibling of .settings-overlay, so
+     its backdrop is never caught by the settings click-to-close handler. */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 30, 20, 0.55);
+    z-index: 300;                 /* above .settings-overlay (200) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0));
+  }
+  .confirm-overlay.show { opacity: 1; pointer-events: auto; }
+  .confirm-box {
+    background: #FFF7EE;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 340px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    transform: scale(0.9);
+    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .confirm-overlay.show .confirm-box { transform: scale(1); }
+  .confirm-msg {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    color: #5A3F2A;
+    margin: 0 0 20px;
+    line-height: 1.35;
+  }
+  .confirm-actions { display: flex; gap: 12px; }
+  .confirm-actions button {
+    flex: 1;
+    min-height: 48px;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .confirm-cancel { background: #EFE3D3; color: #5A3F2A; }
+  .confirm-cancel:active { background: #E6D5BE; }
+  .confirm-ok { background: #FF7A7A; color: #fff; }
+  .confirm-ok:active { background: #F26060; }
+
+  /* Toast — brief in-page feedback (the score chip is hidden behind the open sheet). */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0));
+    transform: translateX(-50%) translateY(12px);
+    background: #4A3A2E;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 400;                 /* above the confirm overlay */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   .settings-header {
     display: flex;
@@ -801,6 +883,20 @@
     </div>
   </div>
 
+  <!-- In-page confirm dialog (sibling of the settings overlay, not a child) -->
+  <div class="confirm-overlay" id="confirm-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="confirm-box">
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-cancel" id="confirm-cancel">Скасувати</button>
+        <button type="button" class="confirm-ok" id="confirm-ok">Так</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brief feedback toast -->
+  <div class="toast" id="toast" aria-live="polite"></div>
+
 <script>
 (() => {
   /* =====================================================================
@@ -1121,6 +1217,7 @@
 
   function renderWord() {
     wordDisplay.innerHTML = "";
+    wordDisplay.style.setProperty("--count", currentItem.word.length);
     [...currentItem.word].forEach((ch, i) => {
       const tile = document.createElement("div");
       tile.className = "tile";
@@ -1270,6 +1367,52 @@
   function closeSettings() {
     settingsOverlay.classList.remove("show");
     settingsOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  /* ----- In-page confirm dialog (iOS-safe replacement for window.confirm) ----- */
+  const confirmOverlay = $("confirm-overlay");
+  const confirmMsg = $("confirm-msg");
+  const confirmOk = $("confirm-ok");
+  const confirmCancel = $("confirm-cancel");
+  let confirmResolver = null;
+  let confirmPrevFocus = null;
+
+  function askConfirm(message, okLabel) {
+    confirmMsg.textContent = message;
+    confirmOk.textContent = okLabel || "Так";
+    confirmPrevFocus = document.activeElement;
+    confirmOverlay.classList.add("show");
+    confirmOverlay.setAttribute("aria-hidden", "false");
+    confirmOk.focus();
+    return new Promise((resolve) => { confirmResolver = resolve; });
+  }
+  function settleConfirm(result) {
+    if (!confirmOverlay.classList.contains("show")) return; // resolve at most once
+    confirmOverlay.classList.remove("show");
+    confirmOverlay.setAttribute("aria-hidden", "true");
+    const resolve = confirmResolver;
+    confirmResolver = null;
+    if (confirmPrevFocus && confirmPrevFocus.focus) confirmPrevFocus.focus();
+    if (resolve) resolve(result);
+  }
+  confirmOk.addEventListener("click", () => settleConfirm(true));
+  confirmCancel.addEventListener("click", () => settleConfirm(false));
+  confirmOverlay.addEventListener("click", (e) => {
+    if (e.target === confirmOverlay) settleConfirm(false); // tap outside = cancel
+  });
+  confirmOverlay.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); settleConfirm(true); }
+    else if (e.key === "Escape") { e.preventDefault(); settleConfirm(false); }
+  });
+
+  /* ----- Toast (brief feedback; the score chip is hidden behind the open sheet) ----- */
+  const toastEl = $("toast");
+  let toastTimer = null;
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
   }
 
   // Tabs
@@ -1490,11 +1633,13 @@
   $("toggle-show-visual").addEventListener("change", (e) => {
     state.showVisual = e.target.checked;
   });
-  $("reset-score-btn").addEventListener("click", () => {
-    if (!confirm("Скинути лічильник слів до 0?")) return;
+  $("reset-score-btn").addEventListener("click", async () => {
+    const ok = await askConfirm("Скинути лічильник слів до 0?", "Скинути");
+    if (!ok) return;
     state.score = 0;
     scoreEl.textContent = "0";
     saveState();
+    showToast("Лічильник скинуто ✓");
   });
 
   /* =====================================================================
