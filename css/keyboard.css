@@ -38,14 +38,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;   /* stacking context for the .target pulse (z-index) */
   }
 
+  /* Touch-typing finger zones (сліпий метод друку) — 4 colours mirrored across hands.
+     Pastel tints so the dark letters stay legible; the two index zones use green vs
+     rose (never red/green) to stay colour-blind-safe. Declared before .highlighted/
+     .target/.bouncing/.shaking so those later, equal-specificity rules win. */
+  .key.zone-pinky  { background: #9EC7E8; color: #2E3B45; }
+  .key.zone-ring   { background: #F3C08A; color: #5A3A18; }
+  .key.zone-middle { background: #96D3B8; color: #234A3A; }
+  .key.zone-index  { background: #E6A9C4; color: #562A40; }
+
+  /* Letters of the current word — independent of the finger zones; overrides the zone
+     fill so the word's letters stand out (white glow). */
   .key.highlighted {
     background: linear-gradient(180deg, #FFFFFF 0%, #F5E9DA 100%);
     color: #4A3A2E;
     box-shadow: 0 3px 0 rgba(160, 130, 100, 0.25);
   }
 
+  /* Next letter to press — gold key + pulse; overrides the zone/highlight for that one key. */
   .key.target {
     background: linear-gradient(180deg, #FFD66B 0%, #FFB347 100%);
     color: #5A3A10;
@@ -54,6 +67,7 @@
       0 4px 0 rgba(180, 130, 30, 0.35),
       0 0 16px rgba(255, 200, 87, 0.6);
     animation: key-pulse 1.2s ease-in-out infinite;
+    z-index: 1;
   }
 
   @keyframes key-pulse {

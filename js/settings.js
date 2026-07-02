@@ -88,13 +88,37 @@
     });
   });
 
-  /* ----- Theme list ----- */
+  /* ----- Theme list (with per-category word selection) ----- */
+
+  // state.excludedWords[themeId] holds the words the user DESELECTED within a
+  // theme. Absent/empty = every word in the theme is active (so words added in a
+  // future version default to on).
+  function excludedList(themeId) {
+    return state.excludedWords[themeId] || [];
+  }
+  function isWordExcluded(themeId, word) {
+    return excludedList(themeId).indexOf(word) !== -1;
+  }
+  function setWordExcluded(themeId, word, excluded) {
+    const list = state.excludedWords[themeId] ? state.excludedWords[themeId].slice() : [];
+    const i = list.indexOf(word);
+    if (excluded && i === -1) list.push(word);
+    else if (!excluded && i !== -1) list.splice(i, 1);
+    if (list.length) state.excludedWords[themeId] = list;
+    else delete state.excludedWords[themeId];
+  }
+  function themeSelectedCount(theme) {
+    const ex = excludedList(theme.id);
+    return theme.items.reduce((n, it) => n + (ex.indexOf(it.word) === -1 ? 1 : 0), 0);
+  }
+
   function renderThemeList() {
     const list = $("theme-list");
     list.innerHTML = "";
     THEMES.forEach(theme => {
-      const row = document.createElement("label");
-      row.className = "theme-row";
+      const item = document.createElement("div");
+      item.className = "theme-item";
+
       const enabled = state.enabledThemes.has(theme.id);
       // build preview from first 3 items
       const previewParts = theme.items.slice(0, 3).map(it => {
@@ -102,18 +126,88 @@
         if (it.emoji) return `<span>${it.emoji}</span>`;
         return "";
       }).join(" ");
-      row.innerHTML = `
-        <input type="checkbox" ${enabled ? "checked" : ""}>
-        <span class="theme-checkbox"></span>
-        <span class="theme-name">${theme.icon} ${theme.name}</span>
-        <span class="theme-preview">${previewParts}</span>
+      const panelId = "theme-words-" + theme.id;
+
+      item.innerHTML = `
+        <label class="theme-row">
+          <input type="checkbox" ${enabled ? "checked" : ""}>
+          <span class="theme-checkbox"></span>
+          <span class="theme-name">${theme.icon} ${theme.name}</span>
+          <span class="theme-preview">${previewParts}</span>
+          <button type="button" class="theme-expand" aria-expanded="false" aria-controls="${panelId}" aria-label="Показати слова">▾</button>
+        </label>
+        <div class="theme-words" id="${panelId}">
+          <div class="theme-words-inner">
+            <div class="theme-words-bar">
+              <span class="tw-count"></span>
+              <button type="button" class="tw-all"></button>
+            </div>
+            <div class="word-chips"></div>
+          </div>
+        </div>
       `;
-      const cb = row.querySelector("input");
+
+      // Whole-category on/off
+      const cb = item.querySelector(".theme-row input");
       cb.addEventListener("change", () => {
         if (cb.checked) state.enabledThemes.add(theme.id);
         else state.enabledThemes.delete(theme.id);
       });
-      list.appendChild(row);
+
+      // Expand / collapse the word selector. The caret is a <button> (interactive
+      // content) inside the <label>, so stop it from also toggling the checkbox.
+      const expandBtn = item.querySelector(".theme-expand");
+      expandBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const open = item.classList.toggle("expanded");
+        expandBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        expandBtn.setAttribute("aria-label", open ? "Сховати слова" : "Показати слова");
+      });
+
+      const chipsEl = item.querySelector(".word-chips");
+      const countEl = item.querySelector(".tw-count");
+      const allBtn = item.querySelector(".tw-all");
+
+      function updateBar() {
+        const total = theme.items.length;
+        const sel = themeSelectedCount(theme);
+        countEl.textContent = "Обрано " + sel + " / " + total;
+        allBtn.textContent = sel === total ? "Зняти всі" : "Обрати всі";
+      }
+
+      function renderChips() {
+        chipsEl.innerHTML = "";
+        theme.items.forEach(it => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "word-chip";
+          chip.setAttribute("aria-pressed", isWordExcluded(theme.id, it.word) ? "false" : "true");
+          const visual = it.svg || it.emoji || "";
+          chip.innerHTML = `<span class="wc-emoji">${visual}</span><span class="wc-word">${it.word}</span>`;
+          chip.addEventListener("click", () => {
+            const active = chip.getAttribute("aria-pressed") === "true";
+            setWordExcluded(theme.id, it.word, active);   // active → now exclude it
+            chip.setAttribute("aria-pressed", active ? "false" : "true");
+            updateBar();
+          });
+          chipsEl.appendChild(chip);
+        });
+      }
+
+      allBtn.addEventListener("click", () => {
+        if (themeSelectedCount(theme) === theme.items.length) {
+          state.excludedWords[theme.id] = theme.items.map(it => it.word);  // deselect all
+        } else {
+          delete state.excludedWords[theme.id];                            // select all
+        }
+        renderChips();
+        updateBar();
+      });
+
+      renderChips();
+      updateBar();
+      list.appendChild(item);
     });
   }
 
@@ -289,7 +383,8 @@
   function syncToggles() {
     $("toggle-show-letters").checked = state.showLetters;
     $("toggle-show-visual").checked = state.showVisual;
-    $("toggle-highlight-keys").checked = state.highlightKeys;
+    $("toggle-highlight-letters").checked = state.highlightLetters;
+    $("toggle-finger-zones").checked = state.fingerZones;
   }
   $("toggle-show-letters").addEventListener("change", (e) => {
     state.showLetters = e.target.checked;
@@ -297,8 +392,12 @@
   $("toggle-show-visual").addEventListener("change", (e) => {
     state.showVisual = e.target.checked;
   });
-  $("toggle-highlight-keys").addEventListener("change", (e) => {
-    state.highlightKeys = e.target.checked;
+  $("toggle-highlight-letters").addEventListener("change", (e) => {
+    state.highlightLetters = e.target.checked;
+    refreshKeyStates();
+  });
+  $("toggle-finger-zones").addEventListener("change", (e) => {
+    state.fingerZones = e.target.checked;
     refreshKeyStates();
   });
   $("reset-score-btn").addEventListener("click", async () => {

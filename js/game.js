@@ -51,10 +51,13 @@
     const uniqueLetters = new Set(currentItem.word);
     const nextLetter = cursor < currentItem.word.length ? currentItem.word[cursor] : null;
     keyEls.forEach((btn, letter) => {
-      btn.classList.remove("highlighted", "target");
-      if (!state.highlightKeys) return;   // harder mode: no keyboard hints
-      if (uniqueLetters.has(letter)) btn.classList.add("highlighted");
-      if (letter === nextLetter) btn.classList.add("target");
+      btn.classList.remove("target", "highlighted", "zone-pinky", "zone-ring", "zone-middle", "zone-index");
+      // Two independent aids (see Mode tab): finger-zone colours and letter highlighting.
+      if (state.fingerZones) btn.classList.add("zone-" + FINGER_ZONE[letter]);
+      if (state.highlightLetters) {
+        if (uniqueLetters.has(letter)) btn.classList.add("highlighted");   // letters in this word
+        if (letter === nextLetter) btn.classList.add("target");            // pulse the next one
+      }
     });
   }
 

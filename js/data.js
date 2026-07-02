@@ -8,6 +8,20 @@
   ];
   const VALID_LETTERS = new Set([...ROWS.join("")]);
 
+  /* Touch-typing finger zone for each key, mirrored across hands: pinky | ring |
+     middle | index. Drives the "highlight keys" mode, which colours the keyboard by
+     which finger presses each key (сліпий метод друку). Verified against the standard
+     ten-finger method for this ЙЦУКЕН layout; index fingers own the two centre columns. */
+  const FINGER_ZONE = {};
+  [
+    ["pinky",  "ЙФЯЗХЇЖЄ"],
+    ["ring",   "ЦІЧЩДЮ"],
+    ["middle", "УВСШЛБ"],
+    ["index",  "КЕАПМИНГРОТЬ"]
+  ].forEach(([zone, letters]) => {
+    for (const ch of letters) FINGER_ZONE[ch] = zone;
+  });
+
   /* =====================================================================
      VERB SVG ICONS (black pictograms)
      Simple inline SVGs; rendered via innerHTML.

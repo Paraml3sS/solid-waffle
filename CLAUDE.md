@@ -56,7 +56,8 @@ sibling files.
 **`css/`** — loaded in this order (the cascade depends on it; `responsive.css`
 must stay last): `base` · `topbar` · `word-tiles` · `keyboard` · `celebration` ·
 `settings` · `responsive`. Key animated states are CSS classes toggled from JS:
-`.tile.done/.current/.hidden-letter`, `.key.highlighted/.target/.bouncing/.shaking`.
+`.tile.done/.current/.hidden-letter`, `.key.zone-pinky/-ring/-middle/-index`
+(touch-typing finger colours) and `.key.highlighted/.target/.bouncing/.shaking`.
 
 **`js/`** — loaded in this order (see "Why classic scripts" below):
 
@@ -106,8 +107,10 @@ in the right slot and mind what it needs at load time.
 - Single localStorage key: **`STORAGE_KEY = "kate-keyboard-game-v1"`**
   (`js/state.js`). Bumping the `-v1` suffix invalidates all saved user data.
 - **`state`** shape (`js/state.js`): `enabledThemes` (Set of theme ids),
-  `customWords` (`[{word}]`), `customImages` (`[{word, dataUrl}]`), `showLetters`,
-  `showVisual`, `score`. `DEFAULT_ENABLED` = fruits, vegetables, animals, family.
+  `customWords` (`[{word}]`), `customImages` (`[{word, dataUrl}]`), `excludedWords`
+  (`{ [themeId]: [word…] }` — words deselected within a built-in theme), `showLetters`,
+  `showVisual`, `highlightLetters`, `fingerZones`, `score`. `DEFAULT_ENABLED` = fruits,
+  vegetables, animals, family.
 - `loadState`/`saveState` are defensively wrapped in try/catch. Saving can fail if
   localStorage is full (custom images are stored as data URLs) → user gets an alert.
 - **`buildPool()`** (`js/state.js`) merges items from enabled themes + custom words
@@ -123,8 +126,12 @@ saves, and shows the celebration. Input arrives from both on-screen key clicks a
 a global `keydown` handler (`js/input.js`) that uppercases the key and maps it onto
 `keyEls`.
 
-Two difficulty toggles (Mode tab): `showLetters` off renders empty
-(`.hidden-letter`) tiles; `showVisual` off hides the picture.
+Four difficulty toggles (Mode tab), all default on: `showLetters` off renders empty
+(`.hidden-letter`) tiles; `showVisual` off hides the picture. The two keyboard aids are
+independent, both applied by `refreshKeyStates`: `highlightLetters` glows the current
+word's letters (`.highlighted`) and pulses the next key (`.target`); `fingerZones`
+colours every key by its touch-typing finger zone (`FINGER_ZONE` in `js/data.js` →
+`.key.zone-*`). Both off = plain keyboard, no hints (hardest).
 
 ## Custom images
 
