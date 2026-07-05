@@ -46,7 +46,7 @@
      rose (never red/green) to stay colour-blind-safe. Declared before .highlighted/
      .target/.bouncing/.shaking so those later, equal-specificity rules win. */
   .key.zone-pinky  { background: #9EC7E8; color: #2E3B45; }
-  .key.zone-ring   { background: #F3C08A; color: #5A3A18; }
+  .key.zone-ring   { background: #FBE7A1; color: #5A3A18; }
   .key.zone-middle { background: #96D3B8; color: #234A3A; }
   .key.zone-index  { background: #E6A9C4; color: #562A40; }
 
