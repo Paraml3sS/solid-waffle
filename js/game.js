@@ -50,12 +50,21 @@
   function refreshKeyStates() {
     const uniqueLetters = new Set(currentItem.word);
     const nextLetter = cursor < currentItem.word.length ? currentItem.word[cursor] : null;
+    // When BOTH aids are on, use the softened zone tints (.zone-*-soft) so the
+    // letter-highlight glow / gold target still lead; zones stay vibrant when solo.
+    const softZones = state.fingerZones && state.highlightLetters;
     keyEls.forEach((btn, letter) => {
-      btn.classList.remove("target", "highlighted", "zone-pinky", "zone-ring", "zone-middle", "zone-index");
+      btn.classList.remove(
+        "target", "highlighted",
+        "zone-pinky", "zone-ring", "zone-middle", "zone-index",
+        "zone-pinky-soft", "zone-ring-soft", "zone-middle-soft", "zone-index-soft"
+      );
       // Two independent aids (see Mode tab): finger-zone colours and letter highlighting.
-      if (state.fingerZones) btn.classList.add("zone-" + FINGER_ZONE[letter]);
+      if (state.fingerZones) btn.classList.add("zone-" + FINGER_ZONE[letter] + (softZones ? "-soft" : ""));
       if (state.highlightLetters) {
-        if (uniqueLetters.has(letter)) btn.classList.add("highlighted");   // letters in this word
+        // White glow on ALL of the current word's letters — DISABLED for now.
+        // To restore, uncomment the next line (CSS `.key.highlighted` is untouched).
+        // if (uniqueLetters.has(letter)) btn.classList.add("highlighted");   // letters in this word
         if (letter === nextLetter) btn.classList.add("target");            // pulse the next one
       }
     });

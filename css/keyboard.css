@@ -50,6 +50,19 @@
   .key.zone-middle { background: #96D3B8; color: #234A3A; }
   .key.zone-index  { background: #E6A9C4; color: #562A40; }
 
+  /* Softened finger zones — used ONLY when letter-highlighting is also on (JS swaps
+     .zone-* for .zone-*-soft in that case). The full-strength tints above would fight
+     the white .highlighted glow and gold .target, so here each zone hue is blended
+     ~65% toward the paper key fill (#ECE0D2): same 4 hues, colour-blind-safe, just
+     much less vibrant so the highlighted/next letters clearly lead. Kept BEFORE
+     .highlighted/.target (same specificity) so those still win by source order —
+     letter-highlight colours are unchanged. Dark text is retained; the lighter fills
+     keep it legible. */
+  .key.zone-pinky-soft  { background: #D1D7DA; color: #2E3B45; }
+  .key.zone-ring-soft   { background: #EED5B9; color: #5A3A18; }
+  .key.zone-middle-soft { background: #CEDBC9; color: #234A3A; }
+  .key.zone-index-soft  { background: #EACDCD; color: #562A40; }
+
   /* Letters of the current word — independent of the finger zones; overrides the zone
      fill so the word's letters stand out (white glow). */
   .key.highlighted {
