@@ -19,7 +19,7 @@ press is highlighted; a correct tap advances, a wrong tap shakes. Completing a
 word triggers a confetti celebration and increments a score counter.
 
 The app is plain, self-contained static files — no build step, no package
-manager, no framework, no external network requests. **`KeyboardGame.html`** is
+manager, no framework, no external network requests. **`index.html`** is
 the entry point (markup + `<link>`/`<script>` tags); the CSS lives in
 `css/*.css` and the JS in `js/*.js`, loaded as **classic (non-module) scripts**
 that share one global scope. The UI is entirely in Ukrainian and mobile-first
@@ -27,15 +27,15 @@ that share one global scope. The UI is entirely in Ukrainian and mobile-first
 
 ## Run / develop
 
-Just open `KeyboardGame.html` in a browser — it works offline over `file://`:
+Just open `index.html` in a browser — it works offline over `file://`:
 
 ```
-start KeyboardGame.html      # Windows
+start index.html      # Windows
 ```
 
 No server, no install, no compile. Classic `<script>`/`<link>` tags load fine
 over `file://` (only ES `type="module"` would be blocked there — we deliberately
-don't use it). Keep `KeyboardGame.html` and the `css/` + `js/` folders together;
+don't use it). Keep `index.html` and the `css/` + `js/` folders together;
 the relative paths break if the HTML is separated from them. Edit the relevant
 `css/*.css` or `js/*.js` file and reload the page.
 
@@ -48,7 +48,7 @@ keep the repo free of any test tooling.
 
 ## File structure
 
-`KeyboardGame.html` is just the shell: `<head>` with seven `<link>` tags, the
+`index.html` is just the shell: `<head>` with seven `<link>` tags, the
 `<body>` markup (game shell, celebration overlay, settings sheet, in-page confirm
 dialog, toast), and nine `<script>` tags at the end. All CSS and JS live in
 sibling files.
@@ -156,7 +156,7 @@ stored as a data URL — this keeps localStorage from filling up.
 
 - No framework/bundler — edit the `css/*.css` and `js/*.js` files directly. Keep
   the JS as classic (non-`module`) scripts sharing one global scope, mind the
-  script load order in `KeyboardGame.html`, and keep everything self-contained
+  script load order in `index.html`, and keep everything self-contained
   (offline-first, no network requests).
 - All UI copy is Ukrainian — match the existing tone (child-friendly).
 - The off-keyboard-letter constraint fails **silently** — if a word doesn't show,
